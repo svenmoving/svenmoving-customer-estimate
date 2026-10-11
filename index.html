@@ -90,7 +90,7 @@ textarea{width:100%;min-height:160px;font:14px/1.45 ui-monospace,monospace;paddi
 <div class="card"><label>Notes for us (stairs, elevator, fragile items...)</label><input id="cNote" placeholder="Optional"></div>
 <div class="card"><label>Your estimate request</label><textarea id="txt" readonly></textarea>
 <div class="row" style="margin-top:8px"><button class="btn" id="done2">Completed</button><button class="btn ghost" id="copy">Copy</button></div>
-<div id="pick" class="hide" style="margin-top:12px"><label>Send with:</label><div class="row"><button class="btn" data-m="g">Gmail</button><button class="btn" data-m="o">Outlook</button><button class="btn" data-m="y">Yahoo</button><button class="btn ghost" data-m="m">Other mail app</button></div></div>
+<div id="pick" class="hide" style="margin-top:12px"><label>Send with:</label><div class="row"><button class="btn" data-m="g">Gmail</button><button class="btn" data-m="o">Outlook</button><button class="btn" data-m="y">Yahoo</button><button class="btn ghost" data-m="m">Other mail app</button><button class="btn ghost" data-m="c">Copy text</button></div><p style="font-size:14px;color:var(--mute);margin:8px 0 0">If the email comes up empty, tap Copy text and send it to svenmovingcalgary@gmail.com.</p></div>
 <p id="msg" style="color:var(--mute);font-size:14px;margin:8px 0 0">Tap Completed, choose your email service, and press Send there. We will reply with a price.</p></div>
 </div>
 </div>
@@ -160,7 +160,11 @@ if(k==="g")return "https://mail.google.com/mail/?view=cm&fs=1&to="+to+"&su="+su+
 if(k==="o")return "https://outlook.live.com/mail/0/deeplink/compose?to="+to+"&subject="+su+"&body="+bo;
 if(k==="y")return "https://compose.mail.yahoo.com/?to="+to+"&subj="+su+"&body="+bo;
 return "mailto:"+to+"?subject="+su+"&body="+bo}
-$("pick").onclick=function(e){var b=e.target.closest("button[data-m]");if(!b)return;var u=mailUrl(b.dataset.m);if(b.dataset.m==="m")location.href=u;else window.open(u,"_blank")};
+function gmail(){var web=mailUrl("g"),ua=navigator.userAgent,to=CO_EMAIL,su=encodeURIComponent("Moving estimate request - "+$("cName").value.trim()),bo=encodeURIComponent($("txt").value);
+if(/iPhone|iPad|iPod/i.test(ua)){location.href="googlegmail:///co?to="+to+"&subject="+su+"&body="+bo;setTimeout(function(){if(!document.hidden)window.open(web,"_blank")},1500)}
+else if(/Android/i.test(ua)){location.href="intent:mailto:"+to+"?subject="+su+"&body="+bo+"#Intent;scheme=mailto;package=com.google.android.gm;S.browser_fallback_url="+encodeURIComponent(web)+";end"}
+else window.open(web,"_blank")}
+$("pick").onclick=function(e){var b=e.target.closest("button[data-m]");if(!b)return;var m=b.dataset.m;if(m==="c"){note(cp()?"Copied. Paste it into an email to "+CO_EMAIL+".":"Select the text above and copy it.");return}if(m==="g")return gmail();var u=mailUrl(m);if(m==="m")location.href=u;else window.open(u,"_blank")};
 $("done1").onclick=complete;$("done2").onclick=complete;
 </script>
 </body>
