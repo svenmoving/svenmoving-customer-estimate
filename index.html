@@ -91,9 +91,10 @@ textarea{width:100%;min-height:160px;font:14px/1.45 ui-monospace,monospace;paddi
 <div class="card"><label>Your estimate request</label><textarea id="txt" readonly></textarea>
 <div class="row" style="margin-top:8px"><button class="btn" id="done2">Completed</button><button class="btn ghost" id="copy">Copy</button></div>
 <div id="pick" class="hide" style="margin-top:12px"><label>Send with:</label><div class="row"><button class="btn" data-m="g">Gmail</button><button class="btn" data-m="o">Outlook</button><button class="btn" data-m="y">Yahoo</button><button class="btn ghost" data-m="m">Other mail app</button><button class="btn ghost" data-m="c">Copy text</button></div><p style="font-size:14px;color:var(--mute);margin:8px 0 0">If the email comes up empty, tap Copy text and send it to svenmovingcalgary@gmail.com.</p></div>
-<p id="msg" style="color:var(--mute);font-size:14px;margin:8px 0 0">Tap Completed, choose your email service, and press Send there. We will reply with a price.</p></div>
+<p id="msg" style="color:var(--mute);font-size:14px;margin:8px 0 0">Tap Completed and your request goes straight to us. We will reply with a price.</p></div>
 </div>
 </div>
+<div id="ok" style="display:none;position:fixed;inset:0;z-index:30;background:rgba(10,28,29,.88);align-items:center;justify-content:center;padding:20px"><div class="card" style="max-width:420px;width:100%;text-align:center;padding:26px 20px;margin:0"><div style="width:72px;height:72px;border-radius:50%;background:var(--tape);color:#fff;font-size:44px;line-height:72px;margin:0 auto 14px;font-weight:800">&#10003;</div><h2 style="margin:0 0 8px;font-size:24px">Estimate sent!</h2><p id="okTxt" style="margin:0 0 18px;font-size:17px"></p><button class="btn" id="okBtn" style="width:100%">Close</button></div></div>
 <div class="bar"><div><div class="t" id="barT">0 items</div><div class="v" id="barV">0 cu ft</div></div><button class="btn" id="toggle">Review</button></div>
 </div>
 <script>
@@ -154,7 +155,13 @@ if(!$("cName").value.trim())return err("Please enter your name.","cName");
 if(!/^\S+@\S+\.\S+$/.test($("cEmail").value.trim()))return err("Please enter a valid email so we can reply to you.","cEmail");
 if(!tot().n)return err("Please add at least one item first.");
 if(S.view!=="sum")$("toggle").click();else render();
-cp();$("pick").classList.remove("hide");note("Choose your email service below and press Send there. The text is also copied, in case you need to paste it.");$("pick").scrollIntoView({behavior:"smooth",block:"center"})}
+send()}
+var sending=false;
+function fail(){sending=false;["done1","done2"].forEach(function(i){$(i).disabled=false});cp();$("pick").classList.remove("hide");note("We could not send it automatically. Choose your email service below, or copy the text and email it to "+CO_EMAIL+".");$("pick").scrollIntoView({behavior:"smooth",block:"center"})}
+function send(){if(sending)return;sending=true;["done1","done2"].forEach(function(i){$(i).disabled=true});note("Sending...");
+var p={name:$("cName").value.trim(),email:$("cEmail").value.trim(),phone:$("cPhone").value,moving_from:$("cFrom").value,moving_to:$("cTo").value,driving_time:$("cDrive").value,preferred_date:$("cDate").value,estimate_request:$("txt").value,_subject:"Moving estimate request - "+$("cName").value.trim(),_replyto:$("cEmail").value.trim(),_captcha:"false",_template:"box"};
+fetch("https://formsubmit.co/ajax/"+CO_EMAIL,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(p)}).then(function(r){return r.json()}).then(function(r){if(r&&(r.success===true||r.success==="true")){$("pick").classList.add("hide");note("Thank you! Your request was sent. We will contact you soon.");$("okTxt").textContent="Thank you, "+$("cName").value.trim()+"! We received your list and will contact you at "+$("cEmail").value.trim()+" soon.";$("ok").style.display="flex";window.scrollTo(0,0);$("done1").textContent="Sent";$("done2").textContent="Sent";$("done1").disabled=true;$("done2").disabled=true}else fail()}).catch(fail)}
+
 function mailUrl(k){var to=CO_EMAIL,su=encodeURIComponent("Moving estimate request - "+$("cName").value.trim()),bo=encodeURIComponent($("txt").value);
 if(k==="g")return "https://mail.google.com/mail/?view=cm&fs=1&to="+to+"&su="+su+"&body="+bo;
 if(k==="o")return "https://outlook.live.com/mail/0/deeplink/compose?to="+to+"&subject="+su+"&body="+bo;
@@ -166,6 +173,7 @@ else if(/Android/i.test(ua)){location.href="intent:mailto:"+to+"?subject="+su+"&
 else window.open(web,"_blank")}
 $("pick").onclick=function(e){var b=e.target.closest("button[data-m]");if(!b)return;var m=b.dataset.m;if(m==="c"){note(cp()?"Copied. Paste it into an email to "+CO_EMAIL+".":"Select the text above and copy it.");return}if(m==="g")return gmail();var u=mailUrl(m);if(m==="m")location.href=u;else window.open(u,"_blank")};
 $("done1").onclick=complete;$("done2").onclick=complete;
+$("okBtn").onclick=function(){$("ok").style.display="none"};
 </script>
 </body>
 </html>
