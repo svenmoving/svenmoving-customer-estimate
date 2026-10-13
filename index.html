@@ -73,6 +73,7 @@ textarea{width:100%;min-height:160px;font:14px/1.45 ui-monospace,monospace;paddi
 <div><label>Your name (required)</label><input id="cName" placeholder="Name"></div>
 <div><label>Phone</label><input id="cPhone" type="tel" placeholder="(000) 000-0000"></div>
 <div class="full"><label>Email (required)</label><input id="cEmail" type="email" inputmode="email" placeholder="you@example.com"></div>
+<div class="full"><label>Property type</label><select id="cType"><option value="">Select...</option><option>House</option><option>Townhouse</option><option>Duplex / Triplex / Fourplex</option><option>Apartment</option><option>Condo</option><option>Basement suite</option><option>Mobile / Modular home</option><option>Studio / Bachelor</option><option>Storage unit</option><option>Office / Commercial</option><option>Other</option></select></div>
 <div class="full"><label>Moving from</label><input id="cFrom" placeholder="Pickup address"></div>
 <div class="full"><label>Moving to</label><input id="cTo" placeholder="Delivery address"></div>
 <div class="full"><label>Driving time between the two addresses</label><input id="cDrive" placeholder="e.g. 25 min (optional)"></div>
@@ -100,8 +101,10 @@ textarea{width:100%;min-height:160px;font:14px/1.45 ui-monospace,monospace;paddi
 <script>
 var ROOMS={
 "Living Room":[["Sofa, 3-seat",60],["Loveseat",40],["Sectional sofa",90],["Armchair",25],["Coffee table",10],["TV stand",20],["TV",15],["Bookcase",25],["Shelving unit",20],["Floor lamp",5],["Rug (rolled)",10],["Picture / mirror",3],["Recliner",35],["Plants",3],["Clock",3],["Ottoman",10],["Decoration",3],["Rocking chair",20],["Credenza",35],["Cat tree",15]],
+"Bonus Room":[["Sofa, 3-seat",60],["Loveseat",40],["Sectional sofa",90],["Armchair",25],["Coffee table",10],["TV stand",20],["TV",15],["Bookcase",25],["Shelving unit",20],["Floor lamp",5],["Rug (rolled)",10],["Picture / mirror",3],["Recliner",35],["Plants",3],["Clock",3],["Ottoman",10],["Decoration",3],["Rocking chair",20],["Credenza",35],["Cat tree",15]],
 "Kitchen / Dining":[["Dining table",40],["Chair",6],["Bar stool",6],["China cabinet / buffet",50],["Refrigerator",50],["Washer",30],["Dryer",30],["Freezer",40],["Microwave",5],["Kitchen island / cart",25],["Hutch",50],["Wine fridge",25]],
-"Office":[["Desk",35],["Office chair",12],["File cabinet",15],["Bookcase",25],["Printer / monitor",5]],
+"Office 1":[["Desk",35],["Office chair",12],["File cabinet",15],["Bookcase",25],["Printer / monitor",5]],
+"Office 2":[["Desk",35],["Office chair",12],["File cabinet",15],["Bookcase",25],["Printer / monitor",5]],
 "Garage":[["Tire (single)",5],["Tire set of 4",20],["Toolbox",5],["Tool chest on wheels",20],["Workbench",40],["Metal shelving",25],["Lawn mower",15],["Snow blower",25],["Bicycle",12],["BBQ grill",20],["Ladder",8],["Wheelbarrow",10],["Air compressor",8],["Generator",10],["Kayak / canoe",25],["Sports gear bin",5],["Storage cabinet",25]],
 "Basement":[["Sofa, 3-seat",60],["Loveseat",40],["Sectional sofa",90],["Armchair",25],["Coffee table",10],["TV stand",20],["TV",15],["Bookcase",25],["Shelving unit",20],["Floor lamp",5],["Rug (rolled)",10],["Picture / mirror",3],["Futon",40],["Mini fridge",15],["Game table",30],["Bar stool",6],["Decoration",3]],
 "Outdoor / Patio":[["Patio table",30],["Patio chair",8],["Lounge chair",12],["Umbrella",5],["Patio set",60],["Trampoline",40],["Outdoor sectional",80],["Fire pit",20],["Storage box",25],["Shed (small)",80]],
@@ -116,8 +119,8 @@ var BED=[["King bed",70],["Queen bed",60],["Twin bed",35],["Mattress King/Queen"
 var CO_EMAIL="svenmovingcalgary@gmail.com";
 var TRUCKS=[[400,"10 ft"],[760,"15 ft"],[1000,"20 ft"],[1700,"26 ft"]];
 var S={room:Object.keys(ROOMS)[0],qty:{},cm:{},view:"list"},$=function(i){return document.getElementById(i)};
-var FIELDS=["cName","cPhone","cEmail","cFrom","cTo","cDrive","cDate","cNote"];
-try{var raw=JSON.parse(localStorage.getItem("moveCli")||"{}");if(raw.qty)S.qty=raw.qty;if(raw.cm)S.cm=raw.cm;FIELDS.forEach(function(k){if(raw.f&&raw.f[k])$(k).value=raw.f[k]})}catch(e){}
+var FIELDS=["cName","cPhone","cEmail","cType","cFrom","cTo","cDrive","cDate","cNote"];
+try{var raw=JSON.parse(localStorage.getItem("moveCli")||"{}");if(raw.qty)S.qty=raw.qty;if(raw.cm)S.cm=raw.cm;Object.keys(S.qty).forEach(function(k){if(k.indexOf("Office|")===0){S.qty["Office 1|"+k.slice(7)]=S.qty[k];delete S.qty[k]}});if(S.cm["Office"]){S.cm["Office 1"]=S.cm["Office"];delete S.cm["Office"]}FIELDS.forEach(function(k){if(raw.f&&raw.f[k])$(k).value=raw.f[k]})}catch(e){}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function save(){try{var f={};FIELDS.forEach(function(k){f[k]=$(k).value});localStorage.setItem("moveCli",JSON.stringify({qty:S.qty,f:f,cm:S.cm}))}catch(e){}}
 function cnt(r){var n=0;ROOMS[r].forEach(function(it){n+=S.qty[r+"|"+it[0]]||0});return n}
@@ -133,8 +136,13 @@ $("list").innerHTML=t.rows.length?t.rows.map(function(r){return '<h2>'+esc(r[0])
 var cms=Object.keys(S.cm).filter(function(r){return ROOMS[r]&&(S.cm[r]||"").trim()});
 if(cms.length)$("list").innerHTML+="<h2>Comments</h2><table class=\"sum\">"+cms.map(function(r){return "<tr><td>"+esc(r)+": "+esc(S.cm[r].trim())+"</td><td></td></tr>"}).join("")+"</table>";
 $("vol").textContent=Math.round(t.cf)+" cu ft";
-var s="MOVING ESTIMATE REQUEST\n"+($("cName").value||"")+" "+($("cPhone").value||"")+"\nEmail: "+($("cEmail").value||"-")+"\nFrom: "+($("cFrom").value||"-")+"\nTo: "+($("cTo").value||"-")+"\nDriving time: "+($("cDrive").value||"-")+"\nDate: "+($("cDate").value||"-")+"\n";
-t.rows.forEach(function(r){s+="\n"+r[0]+":\n";r[1].forEach(function(l){s+="- "+l[0]+" x"+l[1]+"\n"})});
+var s="MOVING ESTIMATE REQUEST\n"+($("cName").value||"")+" "+($("cPhone").value||"")+"\nEmail: "+($("cEmail").value||"-")+"\nProperty type: "+($("cType").value||"-")+"\nFrom: "+($("cFrom").value||"-")+"\nTo: "+($("cTo").value||"-")+"\nDriving time: "+($("cDrive").value||"-")+"\nDate: "+($("cDate").value||"-")+"\n";
+var bd=0,has={},m={},ord=[];
+t.rows.forEach(function(r){has[r[0]]=1;if(r[0].indexOf("Bedroom ")===0)bd++;r[1].forEach(function(l){if(!(l[0] in m)){m[l[0]]=0;ord.push(l[0])}m[l[0]]+=l[1]})});
+var prop=[bd?bd+"-bedroom":"No bedrooms listed"];
+if(has["Bonus Room"])prop.push("Bonus room");if(has["Basement"])prop.push("Basement");if(has["Garage"])prop.push("Garage");if(has["Outdoor / Patio"])prop.push("Patio");
+s+="Layout: "+prop.join(" + ")+"\n\nItems:\n";
+ord.forEach(function(n){s+="- "+n+" x"+m[n]+"\n"});
 if(cms.length){s+="\nRoom comments:\n";cms.forEach(function(r){s+="- "+r+": "+S.cm[r].trim()+"\n"})}
 s+="\nVolume: "+Math.round(t.cf)+" cu ft (about a "+truck(t.cf)+" truck)";if($("cNote").value)s+="\nNotes: "+$("cNote").value;$("txt").value=s}
 save()}
@@ -159,7 +167,7 @@ send()}
 var sending=false;
 function fail(){sending=false;["done1","done2"].forEach(function(i){$(i).disabled=false});cp();$("pick").classList.remove("hide");note("We could not send it automatically. Choose your email service below, or copy the text and email it to "+CO_EMAIL+".");$("pick").scrollIntoView({behavior:"smooth",block:"center"})}
 function send(){if(sending)return;sending=true;["done1","done2"].forEach(function(i){$(i).disabled=true});note("Sending...");
-var p={name:$("cName").value.trim(),email:$("cEmail").value.trim(),phone:$("cPhone").value,moving_from:$("cFrom").value,moving_to:$("cTo").value,driving_time:$("cDrive").value,preferred_date:$("cDate").value,estimate_request:$("txt").value,_subject:"Moving estimate request - "+$("cName").value.trim(),_replyto:$("cEmail").value.trim(),_captcha:"false",_template:"box"};
+var p={name:$("cName").value.trim(),email:$("cEmail").value.trim(),phone:$("cPhone").value,property_type:$("cType").value,moving_from:$("cFrom").value,moving_to:$("cTo").value,driving_time:$("cDrive").value,preferred_date:$("cDate").value,estimate_request:$("txt").value,_subject:"Moving estimate request - "+$("cName").value.trim(),_replyto:$("cEmail").value.trim(),_captcha:"false",_template:"box"};
 fetch("https://formsubmit.co/ajax/"+CO_EMAIL,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(p)}).then(function(r){return r.json()}).then(function(r){if(r&&(r.success===true||r.success==="true")){$("pick").classList.add("hide");note("Thank you! Your request was sent. We will contact you soon.");$("okTxt").textContent="Thank you, "+$("cName").value.trim()+"! We received your list and will contact you at "+$("cEmail").value.trim()+" soon.";$("ok").style.display="flex";window.scrollTo(0,0);$("done1").textContent="Sent";$("done2").textContent="Sent";$("done1").disabled=true;$("done2").disabled=true}else fail()}).catch(fail)}
 
 function mailUrl(k){var to=CO_EMAIL,su=encodeURIComponent("Moving estimate request - "+$("cName").value.trim()),bo=encodeURIComponent($("txt").value);
