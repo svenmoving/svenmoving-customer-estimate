@@ -117,12 +117,13 @@ var BED=[["King bed",70],["Queen bed",60],["Twin bed",35],["Mattress King/Queen"
 (function(){var o={};Object.keys(ROOMS).forEach(function(k){o[k]=(k==="Boxes"||k==="Specialty"||k==="Storage Room")?ROOMS[k]:BOX.concat(ROOMS[k]);if(k==="Living Room"){for(var i=1;i<=5;i++)o["Bedroom "+i]=BOX.concat(WARD,BED)}});ROOMS=o})();
 
 var CO_EMAIL="svenmovingcalgary@gmail.com";
+var W3F_KEY="2726bbd6-dae8-4c07-86c2-e904bd4b3233";
 var TRUCKS=[[400,"10 ft"],[760,"15 ft"],[1000,"20 ft"],[1700,"26 ft"]];
 var S={room:Object.keys(ROOMS)[0],qty:{},cm:{},view:"list"},$=function(i){return document.getElementById(i)};
 var FIELDS=["cName","cPhone","cEmail","cType","cFrom","cTo","cDrive","cDate","cNote"];
-try{var raw=JSON.parse(localStorage.getItem("moveCli")||"{}");if(raw.qty)S.qty=raw.qty;if(raw.cm)S.cm=raw.cm;Object.keys(S.qty).forEach(function(k){if(k.indexOf("Office|")===0){S.qty["Office 1|"+k.slice(7)]=S.qty[k];delete S.qty[k]}});if(S.cm["Office"]){S.cm["Office 1"]=S.cm["Office"];delete S.cm["Office"]}FIELDS.forEach(function(k){if(raw.f&&raw.f[k])$(k).value=raw.f[k]})}catch(e){}
+try{localStorage.removeItem("moveCli")}catch(e){}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function save(){try{var f={};FIELDS.forEach(function(k){f[k]=$(k).value});localStorage.setItem("moveCli",JSON.stringify({qty:S.qty,f:f,cm:S.cm}))}catch(e){}}
+function save(){}
 function cnt(r){var n=0;ROOMS[r].forEach(function(it){n+=S.qty[r+"|"+it[0]]||0});return n}
 function tot(){var n=0,cf=0,rows=[];Object.keys(ROOMS).forEach(function(r){var l=[];ROOMS[r].forEach(function(it){var q=S.qty[r+"|"+it[0]]||0;if(q){n+=q;cf+=q*it[1];l.push([it[0],q,q*it[1]])}});if(l.length)rows.push([r,l])});return{n:n,cf:cf,rows:rows}}
 function truck(cf){for(var i=0;i<TRUCKS.length;i++)if(cf<=TRUCKS[i][0])return TRUCKS[i][1];return "26 ft (2 trips)"}
@@ -165,10 +166,16 @@ if(!tot().n)return err("Please add at least one item first.");
 if(S.view!=="sum")$("toggle").click();else render();
 send()}
 var sending=false;
-function fail(){sending=false;["done1","done2"].forEach(function(i){$(i).disabled=false});cp();$("pick").classList.remove("hide");note("We could not send it automatically. Choose your email service below, or copy the text and email it to "+CO_EMAIL+".");$("pick").scrollIntoView({behavior:"smooth",block:"center"})}
-function send(){if(sending)return;sending=true;["done1","done2"].forEach(function(i){$(i).disabled=true});note("Sending...");
+function fail(){sending=false;$("done1").textContent="Completed";$("done2").textContent="Completed";["done1","done2"].forEach(function(i){$(i).disabled=false});cp();$("pick").classList.remove("hide");note("We could not send it automatically. Choose your email service below, or copy the text and email it to "+CO_EMAIL+".");$("pick").scrollIntoView({behavior:"smooth",block:"center"})}
+function send(){if(sending)return;sending=true;["done1","done2"].forEach(function(i){$(i).disabled=true});note("Sending...");$("done1").textContent="Sending...";$("done2").textContent="Sending...";
 var p={name:$("cName").value.trim(),email:$("cEmail").value.trim(),phone:$("cPhone").value,property_type:$("cType").value,moving_from:$("cFrom").value,moving_to:$("cTo").value,driving_time:$("cDrive").value,preferred_date:$("cDate").value,estimate_request:$("txt").value,_subject:"Moving estimate request - "+$("cName").value.trim(),_replyto:$("cEmail").value.trim(),_captcha:"false",_template:"box"};
-fetch("https://formsubmit.co/ajax/"+CO_EMAIL,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(p)}).then(function(r){return r.json()}).then(function(r){if(r&&(r.success===true||r.success==="true")){$("pick").classList.add("hide");note("Thank you! Your request was sent. We will contact you soon.");$("okTxt").textContent="Thank you, "+$("cName").value.trim()+"! We received your list and will contact you at "+$("cEmail").value.trim()+" soon.";$("ok").style.display="flex";window.scrollTo(0,0);$("done1").textContent="Sent";$("done2").textContent="Sent";$("done1").disabled=true;$("done2").disabled=true}else fail()}).catch(fail)}
+function ok(){$("pick").classList.add("hide");note("Thank you! Your request was sent. We will contact you soon.");$("okTxt").textContent="Thank you, "+$("cName").value.trim()+"! We received your list and will contact you at "+$("cEmail").value.trim()+" soon.";$("ok").style.display="flex";window.scrollTo(0,0);$("done1").textContent="Sent";$("done2").textContent="Sent";$("done1").disabled=true;$("done2").disabled=true}
+function post(useForm){var opt={method:"POST"},url,w=W3F_KEY&&W3F_KEY.indexOf("PASTE")!==0;
+if(w){url="https://api.web3forms.com/submit";var q={access_key:W3F_KEY,subject:p._subject,from_name:p.name,name:p.name,email:p.email,phone:p.phone,property_type:p.property_type,moving_from:p.moving_from,moving_to:p.moving_to,driving_time:p.driving_time,preferred_date:p.preferred_date,message:p.estimate_request};opt.headers={"Content-Type":"application/json",Accept:"application/json"};opt.body=JSON.stringify(q)}
+else{url="https://formsubmit.co/ajax/"+CO_EMAIL;if(useForm){var fd=new FormData();Object.keys(p).forEach(function(k){fd.append(k,p[k])});opt.body=fd;opt.headers={Accept:"application/json"}}else{opt.headers={"Content-Type":"application/json",Accept:"application/json"};opt.body=JSON.stringify(p)}}
+var ac=window.AbortController?new AbortController():null;if(ac){opt.signal=ac.signal;setTimeout(function(){ac.abort()},15000)}
+return fetch(url,opt).then(function(r){return r.text()}).then(function(t){var j={};try{j=JSON.parse(t)}catch(e){}console.log("Send response:",t);return j})}
+post(false).then(function(r){if(r&&(r.success===true||r.success==="true"))return ok();return post(true).then(function(r2){if(r2&&(r2.success===true||r2.success==="true"))return ok();var m=(r2&&r2.message)||(r&&r.message)||"";if(/activat/i.test(m))console.warn("FormSubmit needs activation: open the activation email sent to "+CO_EMAIL+" and click the confirm link.");fail()})}).catch(fail)}
 
 function mailUrl(k){var to=CO_EMAIL,su=encodeURIComponent("Moving estimate request - "+$("cName").value.trim()),bo=encodeURIComponent($("txt").value);
 if(k==="g")return "https://mail.google.com/mail/?view=cm&fs=1&to="+to+"&su="+su+"&body="+bo;
