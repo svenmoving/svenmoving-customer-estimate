@@ -140,8 +140,10 @@ $("vol").textContent=Math.round(t.cf)+" cu ft";
 var s="MOVING ESTIMATE REQUEST\n"+($("cName").value||"")+" "+($("cPhone").value||"")+"\nEmail: "+($("cEmail").value||"-")+"\nProperty type: "+($("cType").value||"-")+"\nFrom: "+($("cFrom").value||"-")+"\nTo: "+($("cTo").value||"-")+"\nDriving time: "+($("cDrive").value||"-")+"\nDate: "+($("cDate").value||"-")+"\n";
 var bd=0,has={},m={},ord=[];
 t.rows.forEach(function(r){has[r[0]]=1;if(r[0].indexOf("Bedroom ")===0)bd++;r[1].forEach(function(l){if(!(l[0] in m)){m[l[0]]=0;ord.push(l[0])}m[l[0]]+=l[1]})});
-var prop=[bd?bd+"-bedroom":"No bedrooms listed"];
-if(has["Bonus Room"])prop.push("Bonus room");if(has["Basement"])prop.push("Basement");if(has["Garage"])prop.push("Garage");if(has["Outdoor / Patio"])prop.push("Patio");
+var pt=($("cType").value||"").toLowerCase(),prop=[];
+prop.push(bd?bd+"-bedroom"+(pt?" "+pt:""):(pt||"No bedrooms listed"));
+var of=(has["Office 1"]?1:0)+(has["Office 2"]?1:0);
+if(has["Bonus Room"])prop.push("Bonus room");if(of)prop.push(of>1?"2 offices":"Office");if(has["Basement"])prop.push("Basement");if(has["Garage"])prop.push("Garage");if(has["Outdoor / Patio"])prop.push("Patio");if(has["Storage Room"])prop.push("Storage room");
 s+="Layout: "+prop.join(" + ")+"\n\nItems:\n";
 ord.forEach(function(n){s+="- "+n+" x"+m[n]+"\n"});
 if(cms.length){s+="\nRoom comments:\n";cms.forEach(function(r){s+="- "+r+": "+S.cm[r].trim()+"\n"})}
